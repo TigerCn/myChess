@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="myApp">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="js/angular-1.5.0.min.js"></script>
+	<style>
+		table {border-collapse: collapse; border: 1px solid #ccc;}
+		table td{border:1px solid #ccc;width:40px;height:40px;text-align:center;}
+		.chessColor{background-color:yellow;}
+	</style>
+</head>
+<body>
+	<div ng-controller='TestController'>
+		行：<input type="number" ng-model="number1" min='0'/>
+		列：<input type="number" ng-model="number2" min='0'/>
+		<button ng-click="isOk()">确定</button>
+		背景色：<select name="" ng-options="item for item in list" ng-model="selected1"></select>
+		提示：<select name="" ng-model="selected2" ng-change="toRemind()">
+				 <option value="true">true</option>	
+				 <option value="">false</option>	
+			  </select>
+		<br><br><br>
+		<table ng-style="{backgroundColor:selected1}">
+			<tr ng-repeat="item in chessBoard">
+				<td ng-repeat="b in item track by $index" ng-click='chessPosition(e)'><strong ng-show="selected2 ">{{b}}</strong></td>
+			</tr>
+		</table>
+	</div>
+	<script>
+		var m1=angular.module('myApp',[]);
+		m1.controller("TestController",["$scope","$timeout",function($scope,$timeout){
+			//初始化表格大小
+			$scope.number1=8;
+			$scope.number2=8;
+			//背景颜色数组
+			$scope.list=['red','green','blue','pink'];
+			$scope.selected1=$scope.list[0];
+			$scope.selected2='true';
+			//单机确定按钮，重新画一个表格
+			$scope.isOk=function(){
+				$scope.chessBoard=[];
+				for(var i=0;i<$scope.number1;i++){
+					$scope.chessBoard[i]=[];
+					for(var j=0;j<$scope.number2;j++){
+						$scope.chessBoard[i][j]=0;
+					}
+				}
+				return $scope.chessBoard;
+			};
+			$scope.toRemind=function(){
+				//当选择提示的时候，告示你咋样根据提示选择
+				if($scope.selected2){
+					alert('往值为0的地方点击，准没错！');
+				}else{
+					alert('靠自己，你一样可以，加油!');
+				}
+			}
+			//点击某个表格的时候，将对应的数组的值改为1，
+			//值为1表示你在此处下了棋子
+			//并且将在其同一行，同一列或者斜线上的数组值为0的值改为2
+			//值为2表示此处不可以下棋子
+			$scope.chessPosition=function(e){
+				  src = e ? e.target : window.event.srcElement;
+			      //获取当前的列数
+			      var c = src.cellIndex;
+			      var row = src.parentNode;
+			      //获取当前的行数
+			      var r = row.rowIndex;
+			      $scope.chessIsOk($scope.chessBoard,r,c);
+			      $scope.isEnd($scope.chessBoard);
+			      src.className='chessColor';
+			}
+			// 确定数组中的某个元素的值，使得该元素对应的位置符合国际象棋，皇后规则
+			$scope.huangHo=function(arr,i,j){
+				var x=arr.length;
+				var y=arr[0].length;
+				for(var a=0;a<x;a++){
+					for(var b=0;b<y;b++){
+						//在落子的斜线方向，将存在的数组元素的值为1，表示这里不可以下棋子了
+						if((Math.abs(a-i)==Math.abs(b-j))&&arr[a][b]==0){
+							arr[a][b]=2;
+						}
+						//将横，纵方向存在的数组元素的值改为1，表示这里不可以下棋子了
+						else if((a==i||b==j)&&arr[a][b]==0){
+							arr[a][b]=2;
+						}
+					}
+				}
+				//将符合下棋的位置，在点击的时候，将对应的数组的值改为1
+				arr[i][j]=1;
+				return arr;
+			}
+			//判断此处落子是否合适
+			$scope.chessIsOk=function(arr,i,j){
+				//如果放的位置对应的数组值不为0，说明此处不适合放棋子
+				if(arr[i][j]!=0){
+					alert('不要气馁，下次加油！');
+					//两秒后在刷新页面
+					var timer=$timeout(function(){
+						location.reload();
+					},2000);
+				}else{
+					//否则说明此次适合放棋子
+					$scope.huangHo(arr,i,j);
+					return arr;
+				}
+			
+			};
+			//判断游戏是否胜利
+			//判断的标准是当数组中所有元素的值没有0的时候，游戏胜利
+			$scope.isEnd=function(arr){
+				for(var i=0;i<arr.length;i++){
+					for(var j=0;j<arr[0].length;j++){
+						if(arr[i][j]==0){
+							return false;
+						}
+					}	
+				}
+				alert('恭喜你，你赢了！');
+				//两秒后在刷新页面
+				var timer=$timeout(function(){
+					location.reload();
+				},2000);
+			}
+		}])
+	</script>
+</body>
+</html>
